@@ -116,10 +116,13 @@ class SMTPEmailService:
             # Personalize body with recipient name
             personalized_body = body.replace("[Recipient Name]", to_name).replace("Hello [Recipient Name]", f"Hello {to_name}")
             
+            # Convert plain text to HTML format
+            html_body = personalized_body.replace('\n', '<br>').replace('•', '&bull;')
+            
             # Add signature inline if provided
             if signature_path and os.path.exists(signature_path):
-                personalized_body += "\n\n<img src='cid:signature' style='max-width:300px;'>"
-                msg.attach(MIMEText(personalized_body, 'html'))
+                html_body += "<br><br><img src='cid:signature' style='max-width:300px;'>"
+                msg.attach(MIMEText(html_body, 'html'))
                 
                 # Attach signature as inline image
                 with open(signature_path, 'rb') as f:
@@ -129,7 +132,7 @@ class SMTPEmailService:
                     image.add_header('Content-Disposition', 'inline')
                     msg.attach(image)
             else:
-                msg.attach(MIMEText(personalized_body, 'plain'))
+                msg.attach(MIMEText(html_body, 'html'))
             
             # Add attachment if provided
             if attachment_path and os.path.exists(attachment_path):
