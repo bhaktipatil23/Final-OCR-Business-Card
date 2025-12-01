@@ -5,6 +5,7 @@ import HeroSection from "@/components/uploads/HeroSection.tsx";
 import FileTable from "@/components/table/FileTable";
 import DataTable from "@/components/table/DataTable";
 import FormModal from "@/components/ui/FormModal";
+import ViewDataModal from "@/components/ui/ViewDataModal";
 import { FileData, ExtractedData } from "@/components/table/TableRow";
 import DocumentPreviewModal from "@/components/PDFPreviewModal";
 
@@ -22,60 +23,21 @@ const Index = () => {
   const [emailModal, setEmailModal] = useState(false);
   const [formSubmissionCount, setFormSubmissionCount] = useState(0);
   const [savedFormData, setSavedFormData] = useState<{ name: string; team: string; event: string } | null>(null);
-  const [isLoadingPersistentData, setIsLoadingPersistentData] = useState(false);
-  
-  const loadPersistentData = async () => {
-    try {
-      console.log('Starting to load persistent data...');
-      setIsLoadingPersistentData(true);
-      
-      // Try to get recent batches
-      const recentBatches = await apiService.getRecentBatches();
-      console.log('Recent batches response:', recentBatches);
-      
-      if (recentBatches.batches && recentBatches.batches.length > 0) {
-        const mostRecentBatch = recentBatches.batches[0];
-        console.log('Most recent saved batch:', mostRecentBatch);
-        
-        // Try to load saved data from the latest batch
-        try {
-          const savedData = await apiService.getSavedData(mostRecentBatch.batch_id);
-          console.log('Most recent saved data response:', savedData);
-          
-          if (savedData.extracted_data && savedData.extracted_data.length > 0) {
-            setAllExtractedData(savedData.extracted_data);
-            setCurrentBatchId(mostRecentBatch.batch_id);
-            setSavedFormData({
-              name: mostRecentBatch.name,
-              team: mostRecentBatch.team,
-              event: mostRecentBatch.event
-            });
-            setFormSubmissionCount(1);
-            
-            console.log('Successfully loaded most recent saved data');
-            toast.success(`Loaded most recent saved data`, {
-              description: `${savedData.total_records} records from ${mostRecentBatch.event}`,
-            });
-          } else {
-            console.log('No extracted data found in saved data');
-          }
-        } catch (dataError) {
-          console.error('Error loading saved data:', dataError);
-        }
-      } else {
-        console.log('No recent batches found');
-      }
-    } catch (error) {
-      console.error('Error loading recent batches:', error);
-    } finally {
-      setIsLoadingPersistentData(false);
-    }
-  };
-  
-  // Load persistent data on component mount
+  const [viewDataModal, setViewDataModal] = useState(false);
+
+  // Add beforeunload warning when there's unsaved data
   useEffect(() => {
-    loadPersistentData();
-  }, []);
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (allExtractedData.length > 0 && formSubmissionCount === 0) {
+        e.preventDefault();
+        e.returnValue = "Do not reload the page unless your data has been saved.";
+        return "Do not reload the page unless your data has been saved.";
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [allExtractedData.length, formSubmissionCount]);
 
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -431,38 +393,21 @@ const Index = () => {
       <Navbar />
       <main className="flex-1 w-full mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-4 phone-container">
         <div className={`${files.length > 0 || allExtractedData.length > 0 ? 'space-y-3 sm:space-y-6 phone-no-center' : 'flex flex-col justify-center min-h-[calc(100vh-80px)]'} phone-full-width`}>
-          {isLoadingPersistentData && (
-            <div className="text-center py-4">
-              <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-blue-500 bg-blue-100 transition ease-in-out duration-150">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Loading previous session data...
-              </div>
-            </div>
-          )}
-          
-          {!isLoadingPersistentData && allExtractedData.length > 0 && files.length === 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-blue-800">
-                    Previous session restored - {allExtractedData.length} business cards loaded from database
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+
           <HeroSection 
             onUpload={handleFileUpload} 
             isUploading={isUploading} 
           />
+          
+          {/* Always visible View Data button */}
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => setViewDataModal(true)}
+              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-300"
+            >
+              View Saved Data
+            </button>
+          </div>
           {files.length > 0 && (
             <div className="space-y-3 sm:space-y-6 phone-full-width">
               <FileTable files={files} onFileClick={handleFileClick} />
@@ -488,6 +433,12 @@ const Index = () => {
               <DataTable data={allExtractedData} onDataChange={handleDataChange} />
               
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-2 phone-stack">
+                <button
+                  onClick={() => setViewDataModal(true)}
+                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-300 touch-target phone-full-width"
+                >
+                  View Data
+                </button>
                 <button
                   onClick={() => {
                     if (formSubmissionCount === 0) {
@@ -561,6 +512,10 @@ const Index = () => {
           title="Enter Details"
         />
         
+        <ViewDataModal
+          isOpen={viewDataModal}
+          onClose={() => setViewDataModal(false)}
+        />
 
       </main>
     </div>

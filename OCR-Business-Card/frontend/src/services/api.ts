@@ -287,6 +287,33 @@ class ApiService {
     return response.json();
   }
 
+  async searchRecords(searchType: 'name' | 'name_team' | 'name_event', searchTerm: string): Promise<{
+    records: {
+      card_name: string;
+      phone: string;
+      email: string;
+      company: string;
+      designation: string;
+      address: string;
+      form_name: string;
+      event: string;
+      team: string;
+      batch_id: string;
+      image_data: string;
+    }[];
+    total: number;
+    search_type: string;
+    search_term: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/search-records?search_type=${searchType}&search_term=${encodeURIComponent(searchTerm)}`);
+
+    if (!response.ok) {
+      throw new Error(`Search failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
 
 }
 

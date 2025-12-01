@@ -8,7 +8,7 @@ from app.utils.logger import app_logger
 class BusinessCardValidator:
     
     def __init__(self):
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        genai.configure(api_key=settings.GOOGLE_API_KEY)
         self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
     
     async def validate_business_card(self, image_path: str) -> Dict:

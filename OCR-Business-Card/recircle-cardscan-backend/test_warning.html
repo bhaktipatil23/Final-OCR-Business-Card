@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Warning Test</title>
+</head>
+<body>
+    <h1>Upload Warning Test</h1>
+    <button onclick="showWarning()">Show Warning</button>
+    <div id="warning-container"></div>
+    
+    <script>
+    async function showWarning() {
+        try {
+            const response = await fetch('/api/v1/show-warning');
+            const data = await response.json();
+            
+            if (data.show) {
+                document.getElementById('warning-container').innerHTML = data.html;
+                
+                // Also show as alert
+                alert(data.text);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    // Auto-show warning after 2 seconds
+    setTimeout(showWarning, 2000);
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@ from pydantic import ConfigDict
 from typing import List
 
 class Settings(BaseSettings):
-    model_config = ConfigDict(env_file="../../.env", extra="ignore")
+    model_config = ConfigDict(env_file="../.env", extra="ignore")
     
     MAX_FILE_SIZE_MB: int = 10
     MAX_FILES_PER_BATCH: int = 300
@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     OUTPUT_CSV_PATH: str = "./output"
     
     # Gemini AI settings
+    GOOGLE_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash-exp"
     

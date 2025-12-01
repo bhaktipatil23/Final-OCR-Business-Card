@@ -23,6 +23,7 @@ class UploadResponse(BaseModel):
     uploaded_files: List[FileInfo]
     total_count: int
     message: str
+    warning: str
 
 class ExtractedData(BaseModel):
     file_id: str
@@ -33,6 +34,7 @@ class ExtractedData(BaseModel):
     company: Optional[str] = "N/A"
     designation: Optional[str] = "N/A"
     timestamp: str
+    image_data: Optional[str] = ""
 
 class ProcessRequest(BaseModel):
     batch_id: str
@@ -49,3 +51,20 @@ class StatusResponse(BaseModel):
     progress: dict
     current_file: Optional[str] = None
     error: Optional[str] = None
+
+class FormData(BaseModel):
+    name: str
+    event: str
+    team: str
+
+class SearchResult(BaseModel):
+    card_name: Optional[str] = "N/A"
+    phone: Optional[str] = "N/A"
+    email: Optional[str] = "N/A"
+    company: Optional[str] = "N/A"
+    designation: Optional[str] = "N/A"
+    address: Optional[str] = "N/A"
+    form_name: str
+    event: str
+    team: str
+    image_data: Optional[str] = ""

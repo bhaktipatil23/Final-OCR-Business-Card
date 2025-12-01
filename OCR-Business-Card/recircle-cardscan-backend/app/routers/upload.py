@@ -12,6 +12,8 @@ router = APIRouter(prefix="/api/v1", tags=["upload"])
 batch_storage = {}
 # Storage for validation results
 validation_storage = {}
+# Track active sessions to detect refresh
+active_sessions = {}
 
 @router.post("/upload", response_model=UploadResponse)
 async def upload_files(files: List[UploadFile] = File(...)):
@@ -58,6 +60,13 @@ async def upload_files(files: List[UploadFile] = File(...)):
     # Store in memory
     batch_storage[batch_id] = uploaded_files
     
+    # Track active session
+    import time
+    active_sessions[batch_id] = {
+        "created_at": time.time(),
+        "status": "active"
+    }
+    
     # Initialize queue with uploaded files
     from app.services.queue_manager import queue_manager
     queue_manager.initialize_batch(batch_id, uploaded_files)
@@ -69,7 +78,8 @@ async def upload_files(files: List[UploadFile] = File(...)):
         batch_id=batch_id,
         uploaded_files=[FileInfo(**f) for f in uploaded_files],
         total_count=len(uploaded_files),
-        message=f"Files uploaded successfully. WebSocket: ws://localhost:8000/ws/{batch_id}"
+        message=f"Files uploaded successfully. WebSocket: ws://localhost:8000/ws/{batch_id}",
+        warning="⚠️⚠️⚠️ CRITICAL WARNING ⚠️⚠️⚠️\n\nDo NOT reload or close this page until your data is saved!\n\nAll processing progress will be LOST if you refresh!"
     )
 
 @router.post("/validate/{batch_id}")
@@ -145,3 +155,66 @@ async def get_validation_status(batch_id: str):
     
     app_logger.info(f"[VALIDATION-STATUS] Returning results for batch {batch_id}")
     return validation_storage[batch_id]
+
+@router.get("/show-warning")
+async def show_warning():
+    """Display warning message - call this after upload"""
+    return {
+        "html": "<div style='background:#ff4444;color:white;padding:15px;text-align:center;font-weight:bold;margin:10px 0;border-radius:5px;'>⚠️ CRITICAL WARNING: Do NOT reload or close this page until your data is saved! All progress will be lost!</div>",
+        "text": "⚠️ CRITICAL WARNING: Do NOT reload or close this page until your data is saved!",
+        "show": True
+    }
+
+@router.get("/warning/{batch_id}")
+async def get_warning_message(batch_id: str):
+    """Get warning message for active batch"""
+    
+    if batch_id in active_sessions:
+        return {
+            "warning": "⚠️ CRITICAL WARNING: Do NOT reload or close this page until your data is saved!",
+            "details": "All processing progress will be lost if you refresh the page. Wait until data is saved to database.",
+            "batch_id": batch_id,
+            "show_warning": True
+        }
+    
+    return {"show_warning": False, "batch_id": batch_id}
+
+@router.post("/heartbeat/{batch_id}")
+async def session_heartbeat(batch_id: str):
+    """Keep session alive - called by frontend every 30 seconds"""
+    
+    import time
+    if batch_id in active_sessions:
+        active_sessions[batch_id]["last_heartbeat"] = time.time()
+        return {"status": "alive", "batch_id": batch_id}
+    
+    return {"status": "not_found", "batch_id": batch_id}
+
+@router.post("/terminate-batch/{batch_id}")
+async def terminate_batch(batch_id: str):
+    """Terminate processing for a batch due to page refresh"""
+    
+    app_logger.info(f"[TERMINATE] Page refresh detected, terminating batch {batch_id}")
+    
+    # Clear batch from storage
+    if batch_id in batch_storage:
+        del batch_storage[batch_id]
+        app_logger.info(f"[TERMINATE] Removed batch {batch_id} from batch_storage")
+    
+    if batch_id in validation_storage:
+        del validation_storage[batch_id]
+        app_logger.info(f"[TERMINATE] Removed batch {batch_id} from validation_storage")
+    
+    if batch_id in active_sessions:
+        del active_sessions[batch_id]
+        app_logger.info(f"[TERMINATE] Removed batch {batch_id} from active_sessions")
+    
+    # Clear from queue manager
+    from app.services.queue_manager import queue_manager
+    queue_manager.clear_batch(batch_id)
+    
+    return {
+        "status": "terminated",
+        "batch_id": batch_id,
+        "message": "Batch processing terminated due to page refresh"
+    }

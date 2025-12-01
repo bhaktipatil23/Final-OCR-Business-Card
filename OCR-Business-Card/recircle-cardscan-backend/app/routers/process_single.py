@@ -141,6 +141,16 @@ async def process_single_file_with_updates(batch_id: str, file_id: str):
                 phone = phone[2:]
             processed_data["phone"] = phone
         
+        # Add base64 image data
+        import base64
+        try:
+            with open(file_info["file_path"], "rb") as image_file:
+                image_data = base64.b64encode(image_file.read()).decode('utf-8')
+                processed_data["image_data"] = image_data
+        except Exception as img_error:
+            print(f"Error encoding image: {img_error}")
+            processed_data["image_data"] = ""
+        
         # Stage 5: Completion
         processing_time = time.time() - start_time
         

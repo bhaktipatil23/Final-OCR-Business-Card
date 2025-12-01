@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import upload, process, download, pdf_preview_simple, vcf_export, prompt_manager, extracted_data, save_data, process_single, websocket_router, email_filters, email_sender, attachment_upload
+from app.routers import upload, process, download, pdf_preview_simple, vcf_export, prompt_manager, extracted_data, save_data, process_single, websocket_router, email_filters, email_sender, attachment_upload, view_data
 from app.config import settings
 import os
 import logging
@@ -76,6 +76,7 @@ app.include_router(save_data.router)
 app.include_router(email_filters.router)
 app.include_router(email_sender.router)
 app.include_router(attachment_upload.router)
+app.include_router(view_data.router)
 
 @app.get("/")
 async def root():

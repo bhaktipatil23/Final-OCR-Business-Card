@@ -6,8 +6,7 @@ import os
 
 router = APIRouter(prefix="/api/v1", tags=["save-data"])
 
-# Store last request data for download fallback
-last_request_data = {}
+
 
 class SaveDataRequest(BaseModel):
     name: str
@@ -25,12 +24,7 @@ async def save_data(request: SaveDataRequest):
     try:
         print(f"[SAVE] Attempting to save data for batch {request.batch_id}")
         
-        # Store request data for download fallback
-        global last_request_data
-        last_request_data = {
-            'batch_id': request.batch_id,
-            'extracted_data': request.extracted_data
-        }
+
         
         conn = mysql.connector.connect(
             host=os.getenv('DB_HOST', 'localhost'),
@@ -64,8 +58,8 @@ async def save_data(request: SaveDataRequest):
         
         # Insert extracted business card data with duplicate prevention
         card_query = """
-        INSERT INTO business_cards (batch_id, name, phone, email, company, designation, address)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO business_cards (batch_id, name, phone, email, company, designation, address, image_data)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         
         check_duplicate_query = """
@@ -94,7 +88,8 @@ async def save_data(request: SaveDataRequest):
                     item.get('email', ''),
                     item.get('company', ''),
                     item.get('designation', ''),
-                    item.get('address', '')
+                    item.get('address', ''),
+                    item.get('image_data', '')
                 ))
                 saved_count += 1
             except mysql.connector.IntegrityError as ie:

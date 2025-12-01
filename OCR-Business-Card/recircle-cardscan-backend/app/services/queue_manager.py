@@ -156,6 +156,12 @@ class QueueManager:
                 return []
             return [f.copy() for f in self._batches[batch_id]["output_queue"]]
     
+    def clear_batch(self, batch_id: str) -> None:
+        """Clear batch data for termination"""
+        with self._lock:
+            if batch_id in self._batches:
+                del self._batches[batch_id]
+    
     def _update_metadata(self, batch_id: str) -> None:
         """Update batch metadata"""
         batch = self._batches[batch_id]
