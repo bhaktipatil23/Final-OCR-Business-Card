@@ -348,6 +348,15 @@ async def process_files_individually(batch_id: str):
                             file_status[batch_id][file_id]["status"] = "completed"
                             file_status[batch_id][file_id]["extracted_data"] = extracted_records
                             
+                            # Convert image to base64
+                            image_data = ""
+                            try:
+                                import base64
+                                with open(file_info['file_path'], 'rb') as img_file:
+                                    image_data = base64.b64encode(img_file.read()).decode('utf-8')
+                            except Exception as img_error:
+                                app_logger.error(f"[PROCESSOR] Error converting image to base64: {img_error}")
+                            
                             # Add each business card to queue
                             for card_index, extracted_data in enumerate(extracted_records):
                                 file_queue[batch_id].append({
@@ -357,8 +366,11 @@ async def process_files_individually(batch_id: str):
                                     "phone": extracted_data.get("phone", "N/A"),
                                     "email": extracted_data.get("email", "N/A"),
                                     "company": extracted_data.get("company", "N/A"),
+                                    "company_website": extracted_data.get("company_website", "N/A"),
                                     "designation": extracted_data.get("designation", "N/A"),
-                                    "address": extracted_data.get("address", "N/A")
+                                    "address": extracted_data.get("address", "N/A"),
+                                    "image_data": image_data,
+                                    "remark": ""
                                 })
                                 cards_added += 1
                         

@@ -70,7 +70,9 @@ async def get_batch_data(batch_id: str):
             email,
             company,
             designation,
-            address
+            address,
+            image_data,
+            remark
         FROM business_cards
         WHERE batch_id = %s
         ORDER BY id
@@ -90,6 +92,8 @@ async def get_batch_data(batch_id: str):
     except Exception as e:
         logger.error(f"Error fetching batch data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @router.get("/api/v1/search-records")
 async def search_records(search_type: str, search_term: str):
@@ -118,6 +122,7 @@ async def search_records(search_type: str, search_term: str):
                 e.name as form_name,
                 e.event,
                 e.team,
+                bc.remark,
                 COALESCE(bc.image_data, '') as image_data
             FROM business_cards bc
             JOIN events e ON bc.batch_id = e.batch_id
@@ -142,6 +147,7 @@ async def search_records(search_type: str, search_term: str):
                     e.name as form_name,
                     e.event,
                     e.team,
+                    bc.remark,
                     COALESCE(bc.image_data, '') as image_data
                 FROM business_cards bc
                 JOIN events e ON bc.batch_id = e.batch_id
@@ -163,6 +169,7 @@ async def search_records(search_type: str, search_term: str):
                     e.name as form_name,
                     e.event,
                     e.team,
+                    bc.remark,
                     COALESCE(bc.image_data, '') as image_data
                 FROM business_cards bc
                 JOIN events e ON bc.batch_id = e.batch_id
@@ -187,6 +194,7 @@ async def search_records(search_type: str, search_term: str):
                     e.name as form_name,
                     e.event,
                     e.team,
+                    bc.remark,
                     COALESCE(bc.image_data, '') as image_data
                 FROM business_cards bc
                 JOIN events e ON bc.batch_id = e.batch_id
@@ -208,6 +216,7 @@ async def search_records(search_type: str, search_term: str):
                     e.name as form_name,
                     e.event,
                     e.team,
+                    bc.remark,
                     COALESCE(bc.image_data, '') as image_data
                 FROM business_cards bc
                 JOIN events e ON bc.batch_id = e.batch_id

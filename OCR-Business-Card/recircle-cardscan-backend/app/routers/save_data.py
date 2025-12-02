@@ -58,25 +58,28 @@ async def save_data(request: SaveDataRequest):
         
         # Insert extracted business card data with duplicate prevention
         card_query = """
-        INSERT INTO business_cards (batch_id, name, phone, email, company, designation, address, image_data)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO business_cards (batch_id, name, phone, email, company, designation, address, image_data, remark)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         
         check_duplicate_query = """
-        SELECT COUNT(*) FROM business_cards WHERE batch_id = %s AND phone = %s
+        SELECT COUNT(*) FROM business_cards 
+        WHERE batch_id = %s AND (phone = %s OR (name = %s AND email = %s))
         """
         
         saved_count = 0
         skipped_count = 0
         for item in request.extracted_data:
             phone = item.get('phone', '')
+            name = item.get('name', '')
+            email = item.get('email', '')
             
-            # Check if this phone number already exists for this batch
-            cursor.execute(check_duplicate_query, (request.batch_id, phone))
+            # Check for duplicates based on phone OR (name + email combination)
+            cursor.execute(check_duplicate_query, (request.batch_id, phone, name, email))
             exists = cursor.fetchone()[0] > 0
             
             if exists:
-                print(f"[SAVE] Duplicate phone {phone} found, skipping")
+                print(f"[SAVE] Duplicate record found (phone: {phone}, name: {name}), skipping")
                 skipped_count += 1
                 continue
                 
@@ -89,7 +92,8 @@ async def save_data(request: SaveDataRequest):
                     item.get('company', ''),
                     item.get('designation', ''),
                     item.get('address', ''),
-                    item.get('image_data', '')
+                    item.get('image_data', ''),
+                    item.get('remark', '')
                 ))
                 saved_count += 1
             except mysql.connector.IntegrityError as ie:

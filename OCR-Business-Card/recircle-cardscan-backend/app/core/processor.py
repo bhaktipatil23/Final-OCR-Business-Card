@@ -77,6 +77,24 @@ class FileProcessor:
             # Store extracted records
             with self.records_lock:
                 for extracted_data in extracted_records:
+                    # Convert image to base64
+                    image_data = ""
+                    try:
+                        import base64
+                        file_path = file_info['file_path']
+                        app_logger.info(f"[PROCESSOR] Attempting to convert image: {file_path}")
+                        
+                        if os.path.exists(file_path):
+                            with open(file_path, 'rb') as img_file:
+                                image_data = base64.b64encode(img_file.read()).decode('utf-8')
+                            app_logger.info(f"[PROCESSOR] Successfully converted image to base64, length: {len(image_data)}")
+                        else:
+                            app_logger.error(f"[PROCESSOR] File not found: {file_path}")
+                    except Exception as e:
+                        app_logger.error(f"[PROCESSOR] Error converting image to base64: {e}")
+                        import traceback
+                        traceback.print_exc()
+                    
                     record = {
                         "file_id": file_info["file_id"],
                         "filename": file_info["filename"],
@@ -85,8 +103,10 @@ class FileProcessor:
                         "phone": extracted_data.get("phone", "N/A"),
                         "email": extracted_data.get("email", "N/A"),
                         "company": extracted_data.get("company", "N/A"),
+                        "company_website": extracted_data.get("company_website", "N/A"),
                         "designation": extracted_data.get("designation", "N/A"),
                         "address": extracted_data.get("address", "N/A"),
+                        "image_data": image_data
                 
                     }
                     

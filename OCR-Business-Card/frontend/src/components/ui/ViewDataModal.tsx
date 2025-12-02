@@ -27,6 +27,7 @@ interface BusinessCardRecord {
   form_name: string;
   event: string;
   team: string;
+  remark: string;
 }
 
 const ViewDataModal = ({ isOpen, onClose }: ViewDataModalProps) => {
@@ -202,8 +203,8 @@ const ViewDataModal = ({ isOpen, onClose }: ViewDataModalProps) => {
               <div className="text-center py-8 text-gray-500">No data found</div>
             ) : (
               <div className="space-y-2">
-                {filteredBatches.map((batch) => (
-                  <div key={batch.batch_id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                {filteredBatches.map((batch, index) => (
+                  <div key={`batch-${index}-${batch.name || 'unknown'}`} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
                     <div className="space-y-3">
                       <div>
                         <span className="font-medium text-gray-700">Records:</span>
@@ -249,28 +250,71 @@ const ViewDataModal = ({ isOpen, onClose }: ViewDataModalProps) => {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Sr No</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Image</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Card Name</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Phone</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Email</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Company</th>
+
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Designation</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Form Name</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Team</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Event</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border-b">Remark</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white">
                       {searchRecords.map((record, index) => (
-                        <tr key={`${record.card_name}-${record.phone}-${record.email}-${index}`} className="hover:bg-gray-50">
+                        <tr key={`record-${index}-${record.card_name || 'unknown'}-${record.phone || 'no-phone'}`} className="hover:bg-gray-50">
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{index + 1}</td>
+                          <td className="px-3 py-2 text-sm text-gray-900 border-b">
+                            {record.image_data ? (
+                              <img 
+                                src={`data:image/jpeg;base64,${record.image_data}`} 
+                                alt="Business Card" 
+                                className="w-20 h-12 object-contain rounded border cursor-pointer hover:scale-110 transition-transform shadow-sm"
+                                onClick={() => {
+                                  const modal = document.createElement('div');
+                                  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+                                  modal.innerHTML = `
+                                    <div class="relative bg-white rounded-lg p-4 max-w-lg max-h-[90vh] overflow-auto">
+                                      <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-semibold">Business Card</h3>
+                                        <button class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.parentElement.parentElement.remove()">
+                                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                          </svg>
+                                        </button>
+                                      </div>
+                                      <img src="data:image/jpeg;base64,${record.image_data}" class="w-full h-auto rounded border shadow-sm" />
+                                    </div>
+                                  `;
+                                  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                                  document.body.appendChild(modal);
+                                }}
+                              />
+                            ) : (
+                              <span className="text-gray-400 text-xs">No Image</span>
+                            )}
+                          </td>
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.card_name}</td>
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.phone}</td>
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.email}</td>
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.company}</td>
+
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.designation}</td>
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.form_name || 'N/A'}</td>
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.team}</td>
                           <td className="px-3 py-2 text-sm text-gray-900 border-b">{record.event}</td>
+                          <td className="px-3 py-2 text-sm text-gray-900 border-b">
+                            <input 
+                              type="text" 
+                              value={record.remark || ''} 
+                              placeholder="Add remark..."
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                              readOnly
+                            />
+                          </td>
                         </tr>
                       ))}
                     </tbody>

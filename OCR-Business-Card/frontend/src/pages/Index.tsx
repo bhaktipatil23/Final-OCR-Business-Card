@@ -24,20 +24,38 @@ const Index = () => {
   const [formSubmissionCount, setFormSubmissionCount] = useState(0);
   const [savedFormData, setSavedFormData] = useState<{ name: string; team: string; event: string } | null>(null);
   const [viewDataModal, setViewDataModal] = useState(false);
+  const [showWarningBanner, setShowWarningBanner] = useState(false);
 
   // Add beforeunload warning when there's unsaved data
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (allExtractedData.length > 0 && formSubmissionCount === 0) {
+      if ((files.length > 0 || allExtractedData.length > 0) && formSubmissionCount === 0) {
         e.preventDefault();
-        e.returnValue = "Do not reload the page unless your data has been saved.";
-        return "Do not reload the page unless your data has been saved.";
+        e.returnValue = "Do not reload the page unless your data has been saved. Refreshing will terminate the process.";
+        return "Do not reload the page unless your data has been saved. Refreshing will terminate the process.";
+      }
+    };
+
+    const handleUnload = () => {
+      // Terminate process if page is refreshed/closed with unsaved data
+      if ((files.length > 0 || allExtractedData.length > 0) && formSubmissionCount === 0 && currentBatchId) {
+        // Send termination request (using sendBeacon for reliability)
+        const hostname = window.location.hostname;
+        const baseUrl = hostname === 'localhost' || hostname === '127.0.0.1' 
+          ? 'http://localhost:8000' 
+          : `http://${hostname}:8000`;
+        
+        navigator.sendBeacon(`${baseUrl}/api/v1/terminate-process/${currentBatchId}`);
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [allExtractedData.length, formSubmissionCount]);
+    window.addEventListener('unload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
+    };
+  }, [files.length, allExtractedData.length, formSubmissionCount, currentBatchId]);
 
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +69,7 @@ const Index = () => {
     setCurrentBatchId(null);
     setSavedFormData(null);
     setFormSubmissionCount(0);
+    setShowWarningBanner(false);
 
     // Validation: Max 300 files
     if (uploadedFiles.length > 300) {
@@ -114,6 +133,9 @@ const Index = () => {
       toast.success(`${processedFiles.length} file${processedFiles.length > 1 ? 's' : ''} uploaded successfully`, {
         description: "Starting UI simulation and queue processing...",
       });
+      
+      // Show warning banner after upload
+      setShowWarningBanner(true);
       
       // Start validation automatically
       await handleValidateFiles(uploadResponse.batch_id);
@@ -399,13 +421,50 @@ const Index = () => {
             isUploading={isUploading} 
           />
           
+          {/* Warning Banner */}
+          {showWarningBanner && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    ⚠️ IMPORTANT: Do Not Reload This Page!
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>
+                      Your files are being processed. Refreshing or closing this page will terminate the process and you will lose your progress.
+                      Please wait until processing is complete and your data is saved.
+                    </p>
+                  </div>
+                </div>
+                <div className="ml-auto pl-3">
+                  <div className="-mx-1.5 -my-1.5">
+                    <button
+                      onClick={() => setShowWarningBanner(false)}
+                      className="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                    >
+                      <span className="sr-only">Dismiss</span>
+                      <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Always visible View Data button */}
           <div className="flex justify-center mt-4">
             <button
               onClick={() => setViewDataModal(true)}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-300"
+              className="px-6 py-3 bg-navy-primary text-white rounded-lg hover:bg-navy-dark transition-all duration-300"
             >
-              View Saved Data
+              View Data
             </button>
           </div>
           {files.length > 0 && (
@@ -433,12 +492,6 @@ const Index = () => {
               <DataTable data={allExtractedData} onDataChange={handleDataChange} />
               
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-2 phone-stack">
-                <button
-                  onClick={() => setViewDataModal(true)}
-                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-300 touch-target phone-full-width"
-                >
-                  View Data
-                </button>
                 <button
                   onClick={() => {
                     if (formSubmissionCount === 0) {

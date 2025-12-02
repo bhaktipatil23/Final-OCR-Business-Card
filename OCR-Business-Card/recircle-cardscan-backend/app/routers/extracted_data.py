@@ -32,8 +32,10 @@ async def get_extracted_data(batch_id: str):
                 "phone": record.get('phone', 'N/A'),
                 "email": record.get('email', 'N/A'),
                 "company": record.get('company', 'N/A'),
+                "company_website": record.get('company_website', 'N/A'),
                 "designation": record.get('designation', 'N/A'),
-                "address": record.get('address', 'N/A')
+                "address": record.get('address', 'N/A'),
+                "image_data": record.get('image_data', '')
             })
         
         result = list(file_groups.values())
