@@ -120,9 +120,32 @@ const ViewDataModal = ({ isOpen, onClose }: ViewDataModalProps) => {
           <h2 className="text-xl font-semibold">
             {viewMode === 'batches' ? 'View Saved Data' : `Search Results - ${filterType}`}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            {viewMode === 'search' && searchRecords.length > 0 && (
+              <button
+                onClick={() => {
+                  const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Sr No,Card Name,Phone,Email,Company,Designation,Form Name,Team,Event,Remark\n" +
+                    searchRecords.map((record, index) => 
+                      `${index + 1},"${record.card_name || ''}","${record.phone || ''}","${record.email || ''}","${record.company || ''}","${record.designation || ''}","${record.form_name || ''}","${record.team || ''}","${record.event || ''}","${record.remark || ''}"`
+                    ).join("\n");
+                  const encodedUri = encodeURI(csvContent);
+                  const link = document.createElement("a");
+                  link.setAttribute("href", encodedUri);
+                  link.setAttribute("download", `search_results_${searchTerm}.csv`);
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+              >
+                Export Excel
+              </button>
+            )}
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-4 mb-4">
@@ -171,17 +194,38 @@ const ViewDataModal = ({ isOpen, onClose }: ViewDataModalProps) => {
                 onKeyPress={handleKeyPress}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
               />
-              <input
-                type="text"
-                placeholder={filterType === 'name_team' ? 'Team' : 'Event'}
-                value={searchTerm.split(',')[1] || ''}
-                onChange={(e) => {
-                  const parts = searchTerm.split(',');
-                  setSearchTerm(`${parts[0] || ''},${e.target.value}`);
-                }}
-                onKeyPress={handleKeyPress}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-              />
+              {filterType === 'name_team' ? (
+                <select
+                  value={searchTerm.split(',')[1] || ''}
+                  onChange={(e) => {
+                    const parts = searchTerm.split(',');
+                    setSearchTerm(`${parts[0] || ''},${e.target.value}`);
+                  }}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="">Select Team</option>
+                  <option value="EPR">EPR</option>
+                  <option value="Grants">Grants</option>
+                  <option value="Textile">Textile</option>
+                  <option value="Recycling">Recycling</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Tech">Tech</option>
+                  <option value="HR">HR</option>
+                  <option value="Accounts">Accounts</option>
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="Event"
+                  value={searchTerm.split(',')[1] || ''}
+                  onChange={(e) => {
+                    const parts = searchTerm.split(',');
+                    setSearchTerm(`${parts[0] || ''},${e.target.value}`);
+                  }}
+                  onKeyPress={handleKeyPress}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                />
+              )}
             </div>
           )}
           

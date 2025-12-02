@@ -6,12 +6,14 @@ interface DragDropUploadProps {
   isUploading?: boolean;
   uploadType: 'folder' | 'files';
   onUploadTypeChange: (type: 'folder' | 'files') => void;
+  onViewData?: () => void;
 }
 
-const DragDropUpload = ({ onUpload, isUploading = false, uploadType, onUploadTypeChange }: DragDropUploadProps) => {
+const DragDropUpload = ({ onUpload, isUploading = false, uploadType, onUploadTypeChange, onViewData }: DragDropUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeButton, setActiveButton] = useState<'view' | 'folder' | 'files'>('view');
 
   const handleClick = () => {
     if (uploadType === 'folder') {
@@ -71,11 +73,29 @@ const DragDropUpload = ({ onUpload, isUploading = false, uploadType, onUploadTyp
     <div className="w-full max-w-2xl mx-auto space-y-3 sm:space-y-4 px-2 phone-full-width">
       {/* Upload Type Toggle */}
       <div className="flex justify-center px-2">
-        <div className="bg-white rounded-xl p-1 shadow-md w-full sm:w-auto max-w-sm phone-full-width">
+        <div className="bg-white rounded-xl p-1 shadow-md flex w-full max-w-md phone-full-width">
+          {onViewData && (
+            <button
+              onClick={() => {
+                setActiveButton('view');
+                onViewData();
+              }}
+              className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base touch-target ${
+                activeButton === 'view'
+                  ? 'bg-navy-primary text-white shadow-md'
+                  : 'text-navy-primary hover:bg-gray-100'
+              }`}
+            >
+              View Data
+            </button>
+          )}
           <button
-            onClick={() => onUploadTypeChange('folder')}
-            className={`w-1/2 sm:w-auto px-3 py-2 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base touch-target ${
-              uploadType === 'folder'
+            onClick={() => {
+              setActiveButton('folder');
+              onUploadTypeChange('folder');
+            }}
+            className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base touch-target ${
+              activeButton === 'folder'
                 ? 'bg-navy-primary text-white shadow-md'
                 : 'text-navy-primary hover:bg-gray-100'
             }`}
@@ -84,9 +104,12 @@ const DragDropUpload = ({ onUpload, isUploading = false, uploadType, onUploadTyp
             <span className="phone-small-text">Folder</span>
           </button>
           <button
-            onClick={() => onUploadTypeChange('files')}
-            className={`w-1/2 sm:w-auto px-3 py-2 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base touch-target ${
-              uploadType === 'files'
+            onClick={() => {
+              setActiveButton('files');
+              onUploadTypeChange('files');
+            }}
+            className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base touch-target ${
+              activeButton === 'files'
                 ? 'bg-navy-primary text-white shadow-md'
                 : 'text-navy-primary hover:bg-gray-100'
             }`}

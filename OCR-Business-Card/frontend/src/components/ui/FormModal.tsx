@@ -44,13 +44,22 @@ const FormModal: React.FC<FormModalProps> = ({ isOpen, onClose, onSubmit, title 
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
-            <input
-              type="text"
+            <select
               required
               value={formData.team}
               onChange={(e) => setFormData({ ...formData, team: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            >
+              <option value="">Select Team</option>
+              <option value="EPR">EPR</option>
+              <option value="Grants">Grants</option>
+              <option value="Textile">Textile</option>
+              <option value="Recycling">Recycling</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Tech">Tech</option>
+              <option value="HR">HR</option>
+              <option value="Accounts">Accounts</option>
+            </select>
           </div>
           
           <div>

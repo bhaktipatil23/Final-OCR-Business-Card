@@ -5,9 +5,10 @@ import InfoSection from "./InfoSection";
 interface HeroSectionProps {
   onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isUploading?: boolean;
+  onViewData?: () => void;
 }
 
-const HeroSection = ({ onUpload, isUploading = false }: HeroSectionProps) => {
+const HeroSection = ({ onUpload, isUploading = false, onViewData }: HeroSectionProps) => {
   const [uploadType, setUploadType] = useState<'folder' | 'files'>('folder');
 
   return (
@@ -26,6 +27,7 @@ const HeroSection = ({ onUpload, isUploading = false }: HeroSectionProps) => {
         isUploading={isUploading} 
         uploadType={uploadType}
         onUploadTypeChange={setUploadType}
+        onViewData={onViewData}
       />
       
       <InfoSection />

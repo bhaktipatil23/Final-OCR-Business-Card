@@ -418,55 +418,13 @@ const Index = () => {
 
           <HeroSection 
             onUpload={handleFileUpload} 
-            isUploading={isUploading} 
+            isUploading={isUploading}
+            onViewData={() => setViewDataModal(true)}
           />
           
-          {/* Warning Banner */}
-          {showWarningBanner && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    ⚠️ IMPORTANT: Do Not Reload This Page!
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>
-                      Your files are being processed. Refreshing or closing this page will terminate the process and you will lose your progress.
-                      Please wait until processing is complete and your data is saved.
-                    </p>
-                  </div>
-                </div>
-                <div className="ml-auto pl-3">
-                  <div className="-mx-1.5 -my-1.5">
-                    <button
-                      onClick={() => setShowWarningBanner(false)}
-                      className="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
-                    >
-                      <span className="sr-only">Dismiss</span>
-                      <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+
           
-          {/* Always visible View Data button */}
-          <div className="flex justify-center mt-4">
-            <button
-              onClick={() => setViewDataModal(true)}
-              className="px-6 py-3 bg-navy-primary text-white rounded-lg hover:bg-navy-dark transition-all duration-300"
-            >
-              View Data
-            </button>
-          </div>
+
           {files.length > 0 && (
             <div className="space-y-3 sm:space-y-6 phone-full-width">
               <FileTable files={files} onFileClick={handleFileClick} />
@@ -516,7 +474,7 @@ const Index = () => {
                 >
                   Export
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     if (formSubmissionCount === 0) {
                       setEmailModal(true);
@@ -527,7 +485,7 @@ const Index = () => {
                   className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-300 touch-target phone-full-width"
                 >
                   Send Email
-                </button>
+                </button> */}
               </div>
             </div>
           )}
@@ -569,6 +527,26 @@ const Index = () => {
           isOpen={viewDataModal}
           onClose={() => setViewDataModal(false)}
         />
+        
+        {/* Warning Modal */}
+        {showWarningBanner && allExtractedData.length === 0 && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    📋 Processing in Progress
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Your files are being processed. Please avoid refreshing or closing this page to prevent data loss.
+                    Wait until processing completes and your data is saved.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>
